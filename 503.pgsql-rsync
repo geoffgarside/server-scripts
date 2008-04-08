@@ -1,0 +1,50 @@
+#!/bin/sh
+#
+# Shell script to run after pgsql_backup to rsync the
+# backups to a remote host.
+# 
+# Written by Geoff Garside <geoff.garside@openhosting.co.uk>
+# 
+
+# Define these variables in either /etc/periodic.conf or
+# /etc/periodic.conf.local to override the default values.
+# 
+# daily_pgsql_backup_enable="YES" # do backups
+# daily_pgsql_rsync_enable="YES"  # rsync them
+# daily_pgsql_rsync_user="pgsql"  # user to get keys from
+# daily_pgsql_rsync_target="user@backups:mybackups"
+# 
+
+daily_pgsql_rsync_user="pgsql"
+daily_pgsql_rsync_flags="-tav -e ssh"
+
+# Copy some vars in from /usr/local/etc/periodic/daily/502.pgsql
+# though if its been changed in periodic.conf then we'll get that
+# shortly.
+daily_pgsql_backupdir="~pgsql/backups"
+
+if [ -r /etc/defaults/periodic.conf ]; then
+  . /etc/defaults/periodic.conf
+  source_periodic_confs
+fi
+
+eval backupdir=${daily_pgsql_backupdir}
+
+rc=0
+
+case "$daily_pgsql_backup_enable" in
+  [Yy][Ee][Ss])
+    # OK backups are being taken, we can proceed.
+    case "$daily_pgsql_rsync_enable" in
+      [Yy][Ee][Ss])
+        # Even better, we want to rsync them too
+        setuidgid ${daily_pgsql_rsync_user} \
+          rsync ${daily_pgsql_rsync_flags} \
+            ${backupdir} ${daily_pgsql_rsync_target}
+        [ $? -gt 0 ] && rc=3
+      ;;
+    esac
+    ;;
+esac
+
+exit $rc
