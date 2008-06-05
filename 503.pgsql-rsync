@@ -16,11 +16,9 @@
 # 
 
 daily_pgsql_rsync_user="pgsql"
-daily_pgsql_rsync_flags="-tav -e ssh"
+daily_pgsql_rsync_flags="-tavz -e ssh --delete"
 
 # Copy some vars in from /usr/local/etc/periodic/daily/502.pgsql
-# though if its been changed in periodic.conf then we'll get that
-# shortly.
 daily_pgsql_backupdir="~pgsql/backups"
 
 if [ -r /etc/defaults/periodic.conf ]; then
@@ -38,9 +36,11 @@ case "$daily_pgsql_backup_enable" in
     case "$daily_pgsql_rsync_enable" in
       [Yy][Ee][Ss])
         # Even better, we want to rsync them too
-        setuidgid ${daily_pgsql_rsync_user} \
-          rsync ${daily_pgsql_rsync_flags} \
-            ${backupdir} ${daily_pgsql_rsync_target}
+        today=`date +"%Y-%m-%d %H:%M:%S"`
+        echo "[$today]: 503.pgsql-rsync ran" >> /var/log/pgsql-rsync.log
+        /usr/local/bin/setuidgid ${daily_pgsql_rsync_user} \
+          /usr/local/bin/rsync ${daily_pgsql_rsync_flags} \
+            ${backupdir} ${daily_pgsql_rsync_target} >/dev/null 2>&1
         [ $? -gt 0 ] && rc=3
       ;;
     esac
@@ -48,3 +48,5 @@ case "$daily_pgsql_backup_enable" in
 esac
 
 exit $rc
+
+
