@@ -5,6 +5,10 @@
 # 
 # Written by Geoff Garside <geoff.garside@openhosting.co.uk>
 # 
+# This file should be placed along side 502.pgsql in 
+#  /usr/local/etc/periodic/daily
+# and given similar permissions.
+# 
 
 # Define these variables in either /etc/periodic.conf or
 # /etc/periodic.conf.local to override the default values.
